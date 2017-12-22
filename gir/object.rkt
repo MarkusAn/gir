@@ -8,14 +8,21 @@
          racket/match (prefix-in f: "field.rkt"))
 
 (define-gi* g-object-info-find-method (_fun _pointer _string -> _info))
+(define-gi* g-object-info-find-method-using-interfaces (_fun _pointer _string _pointer -> _info)) 
+
 (define-gi* g-object-info-get-parent (_fun _pointer -> _info))
 (define-gi* g-object-info-get-n-fields (_fun _pointer -> _int))
 (define-gi* g-object-info-get-field (_fun _pointer _int -> _info))
 
+(define (find-method-using-interfaces info name)
+	(g-object-info-find-method-using-interfaces info name #f))
+
 (define (find-method info name)
   (and info
-       (or (g-object-info-find-method info name)
-           (find-method (g-object-info-get-parent info) name))))
+       (or  (g-object-info-find-method info name)
+            (find-method-using-interfaces info name)
+            (find-method (g-object-info-get-parent info) name)
+            )))
 
 (define-gobject* g-object-unref (_fun _pointer -> _void) #:wrap (deallocator))
 (define-gobject* g-object-ref-sink (_fun _pointer -> _pointer) #:wrap (allocator g-object-unref))
